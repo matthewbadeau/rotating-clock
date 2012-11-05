@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Rotating Clock</title>
+		<meta name="content-type" content="text/html; charset=UTF-8" />
+		<style>
+			section { position: relative; }
+			.hours { position: absolute; z-index: 1; }
+			.minutes { position: absolute; z-index: 5; }
+			.seconds { position: absolute; z-index: 10; }
+			.hands { position: absolute; z-index: 15; }
+
+			#start { position: absolute; top: 50px; left: 630px; }
+			#stop { position: absolute; top: 75px; left: 630px; }
+			#reset { position: absolute; top: 100px; left: 630px; }
+		</style>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+	</head>
+	<body>
+
+		<section>
+			<div class="hours">
+				<img id="hrs" src="clock-hours.png" width="602" height="602">
+			</div>
+			<div class="minutes">
+				<img id="min" src="clock-minutes.png" width="602" height="602">
+			</div>
+			<div class="seconds">
+				<img id="sec" src="clock-seconds.png" width="602" height="602">
+			</div>
+			<div class="hands">
+				<img id="hand" src="clock-hands.png" width="602" height="602">
+			</div>
+		</section>
+
+		<p><button id="start">Start Clock</button></p>
+		<p><button id="stop">Stop Clock</button></p>
+		<p><button id="reset">Reset Clock</button></p>
+
+		<script>
+			// Initialize global variables
+			var secDegrees = 0; var secInterval;
+			var minDegrees = 0; var minInterval;
+			var hrsDegrees = 0; var hrsInterval;
+
+			// Rotate one circle by a pre-set amount of degrees.
+			function rotateCircle(degreeVar,target) {
+				if (degreeVar >= 360 ) { degreeVar = 0; }
+				if (target == "#hrs") {
+					degreeVar = degreeVar + 0.5;
+				} else {
+					degreeVar = degreeVar + 6;
+				}
+
+				$(target).css('transform','rotate(-'+degreeVar+'deg)');
+				$(target).css('-moz-transform','rotate(-'+degreeVar+'deg)');
+				$(target).css('-webkit-transform','rotate(-'+degreeVar+'deg)');
+				$(target).css('-ms-transform','rotate(-'+degreeVar+'deg)');
+
+				if (target == "#sec") {
+					secDegrees = degreeVar;
+				} else if (target == "#min") {
+					minDegrees = degreeVar;
+				} else if (target == "#hrs") {
+					hrsDegrees = degreeVar;
+				}
+			}
+
+			// Reset the Clock
+			function resetClock() {
+				$("#sec").css('transform','none')
+						 .css('-moz-transform','none')
+						 .css('-webkit-transform','none')
+						 .css('-ms-transform','none');
+				$("#min").css('transform','none')
+						 .css('-moz-transform','none')
+						 .css('-webkit-transform','none')
+						 .css('-ms-transform','none');
+				$("#hrs").css('transform','none')
+						 .css('-moz-transform','none')
+						 .css('-webkit-transform','none')
+						 .css('-ms-transform','none');
+			}
+
+			// Set initial clock position based on the current time
+			function initClock() {
+				currentTime = new Date();
+				currentSec = currentTime.getSeconds() * 6;
+				rotateCircle(currentSec,"#sec");
+				currentMin = (currentTime.getMinutes()-1) * 6;
+				rotateCircle(currentMin,"#min");
+				currentHour = currentTime.getHours();
+				if (currentHour > 12) { currentHour = currentHour - 12; }
+				currentHour = (currentHour * 30) + (currentTime.getMinutes() / 2);
+				rotateCircle(currentHour,"#hrs");
+			}
+
+			// Start the Clock
+			function startClock() {
+				stopClock();
+				resetClock();
+				initClock();
+
+				currentTime = new Date();
+				currentSec = currentTime.getSeconds();
+				if (currentSec == 0) {
+					delay = 0;
+				} else {
+					delay = (60 - currentSec) * 1000;
+				}
+				// Have rotation of hour and min start on 0 seconds, not 1 second.
+				if (delay > 1000) { delay = delay - 1000; }
+
+				// Seconds: rotate 6 degrees every second
+				secInterval = window.setInterval(function() { rotateCircle(secDegrees,"#sec") },1000);
+
+				// Minutes: rotate 6 degrees every 60 seconds
+				if (delay > 0 ) {
+					window.setTimeout(function() {
+						rotateCircle(minDegrees,"#min");
+						minInterval = window.setInterval(function() { rotateCircle(minDegrees,"#min") },60000);
+					},delay);
+				} else {
+					minInterval = window.setInterval(function() { rotateCircle(minDegrees,"#min") },60000);
+				}
+
+				// Hours: rotate 0.5 degrees every 60 seconds (total of 30 degrees in 1 hour)
+				if (delay > 0 ) {
+					window.setTimeout(function() {
+						rotateCircle(hrsDegrees,"#hrs");
+						hrsInterval = window.setInterval(function() { rotateCircle(hrsDegrees,"#hrs") },60000);
+					},delay);
+				} else {
+					hrsInterval = window.setInterval(function() { rotateCircle(hrsDegrees,"#hrs") },60000);
+				}
+			}
+
+			// Stop the Clock
+			function stopClock() {
+				window.clearInterval(secInterval);
+				window.clearInterval(minInterval);
+				window.clearInterval(hrsInterval);
+			}
+
+			// Initialize buttons and start clock on page load
+			$(function() {
+				$('#start').click(function() { startClock(); });
+				$('#stop').click(function() { stopClock(); });
+				$('#reset').click(function() { stopClock(); resetClock(); });
+				startClock();
+			});
+		</script>
+
+	</body>
+</html>
